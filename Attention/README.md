@@ -177,7 +177,7 @@ class SelfAttention(nn.Module):
         
         
 if __name__ == "__main__":
-	n_x = 4
+    n_x = 4
     d_x = 80
     
     x = torch.randn(batch, n_x, d_x)
