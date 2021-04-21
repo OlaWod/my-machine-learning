@@ -102,8 +102,8 @@ class SimpleSelfAttention(nn.Module):
         super().__init__()
 
         self.n_head = n_head
-        self.d_k = d_model #// n_head
-        self.d_v = d_model #// n_head
+        self.d_k = d_model // n_head
+        self.d_v = d_model // n_head
 
         self.fc_q = nn.Linear(d_model, n_head * self.d_k)
         self.fc_k = nn.Linear(d_model, n_head * self.d_k)
@@ -201,7 +201,8 @@ if __name__ == "__main__":
     d_x = 81
     
     x = torch.randn(batch, n_x, d_x)
-    mask = torch.zeros(batch, n_x, n_x).bool()
+    mask = torch.zeros(batch, n_x).bool() # (batch, n_k)
+    mask = mask.unsqueeze(1).expand(-1, n_x, -1) # (batch, n_x, n_x), (batch, n_q, n_k)
 
     selfattn = SimpleSelfAttention(n_head=8, d_model=d_x)
     attn, output = selfattn(x, mask=mask)
