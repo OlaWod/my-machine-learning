@@ -13,6 +13,8 @@ The **output** is computed as **a weighted sum of the values**, where the **weig
 
 输入是query和 key-value，注意力机制首先计算query与每个key的关联性（compatibility），每个关联性作为每个value的权重（weight），各个权重与value的乘积相加得到输出。
 
+例如，厨房里有苹果、青菜、西红柿、玛瑙筷子、朱砂碗，每个物品都有一个key（$d_k$维向量）和value（$d_v$维向量）。现在有一个“红色”的query（$d_q$维向量），注意力机制首先计算“红色”的query与苹果的key、青菜的key、西红柿的key、玛瑙筷子的key、朱砂碗的key的关联性，再计算得到每个物品对应的权重，最终输出 =（苹果的权重x苹果的value + 青菜的权重x青菜的value + 西红柿的权重x西红柿的value + 玛瑙筷子的权重x玛瑙筷子的value + 朱砂碗的权重x朱砂碗的value）。最终输出包含了每个物品的信息，由于苹果、西红柿的权重较大（因为与“红色”关联性更大），因此最终输出受到苹果、西红柿的value的影响更大。
+
 [Attention Is All You Need](https://arxiv.org/abs/1706.03762v5) 中用到的attention叫做“Scaled Dot-Product Attention”，具体过程如下图所示：
 
 ![](https://github.com/OlaWod/my-machine-learning/blob/master/Attention/figs/1.PNG)
@@ -22,6 +24,10 @@ The **output** is computed as **a weighted sum of the values**, where the **weig
 具体计算过程如下图所示：
 
 ![](https://github.com/OlaWod/my-machine-learning/blob/master/Attention/figs/3.PNG)
+
+> 在Scale这步，为什么要除以$\sqrt{d_k}$，解释是这样的：
+> We suspect that for large values of $d_k$, the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients. To counteract this effect, we scale the dot products by $\frac{1}{\sqrt{d_k}}$.
+> To illustrate why the dot products get large, assume that the components of q and k are independent random variables with mean 0 and variance 1. Then their dot product, $q · k = \sum_{i=1}^{d_k}q_ik_i$, has mean 0 and variance $\sqrt{d_k}$.
 
 代码实现如下：
 
@@ -66,7 +72,16 @@ if __name__ == "__main__":
 
 ## 二、多头注意力（Multi-head attention）
 
-上述只求一次注意力的过程可以叫做单头注意力。多头注意力就是对同样的Q, K, V求多次注意力，得到多个不同的output，再把这些不同的output连接起来得到最终的output。过程如下图所示：
+上述只求一次注意力的过程可以叫做单头注意力。多头注意力就是对同样的Q, K, V求多次注意力，得到多个不同的output，再把这些不同的output连接起来得到最终的output。
+
+多头注意力的作用是：
+> Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions.
+
+不同头部的output就是从不同层面（representation subspace）考虑关联性而得到的输出。
+
+例如，以“红色”为query，第一个头部（从食物层面考虑）得到的output受到苹果、西红柿的value的影响更大；第二个头部（从餐具层面考虑）得到的output受到玛瑙筷子、朱砂碗的value的影响更大。相比单头注意力，多头注意力可以考虑到更多层面的信息。
+
+过程如下图所示：
 
 ![](https://github.com/OlaWod/my-machine-learning/blob/master/Attention/figs/4.PNG)
 
@@ -138,9 +153,11 @@ if __name__ == "__main__":
 
 ## 三、自注意力（self-attention）
 
-当注意力的query和key、value全部来自于同一个东西时，就称为自注意力。如下图所示，query和key、value全都来源于X。
+当注意力的query和key、value全部来自于同一堆东西时，就称为自注意力。如下图所示，query和key、value全都来源于X。
 
 ![](https://github.com/OlaWod/my-machine-learning/blob/master/Attention/figs/6.PNG)
+
+例如，厨房里有苹果、青菜、西红柿、玛瑙筷子、朱砂碗，每个物品都会计算得到一个query（$d_q$维向量），以及一个key（$d_k$维向量）和value（$d_v$维向量）。“苹果”的query与苹果、青菜、西红柿、玛瑙筷子、朱砂碗的key和value做注意力，得到最终输出。其他物品的query也如此操作。这样，输入5个物品，有5个query，得到5个输出，相当于将这5个物品换了一种表示形式，而这新的表示形式（得到的输出）每个都是是考虑了所有物品的信息的。
 
 自注意力通过X求query和key、value的计算过程如下图所示：
 
